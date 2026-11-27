@@ -29,6 +29,16 @@ DATA_PATH = REPO_ROOT / "data" / "test_data.npz"
 CONFIGS_DIR = REPO_ROOT / "configs"
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _clear_jit_caches():
+    """Start each test run from a fresh trace.
+
+    `model.generate` is jitted at import time, so after editing a function it calls
+    (and letting `%autoreload` reload it) the old compiled program would still be used.
+    """
+    jax.clear_caches()
+
+
 @pytest.fixture(scope="module")
 def _npz():
     with np.load(DATA_PATH) as npz:
