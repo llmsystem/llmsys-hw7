@@ -155,6 +155,9 @@ def load_hf_llama_weights(
     sd = hf_model.state_dict()
 
     tie_emb = bool(getattr(hf_cfg, "tie_word_embeddings", True))
+    # transformers>=5 moves `rope_theta` into `config.rope_parameters`.
+    rope_params = getattr(hf_cfg, "rope_parameters", None) or {}
+    rope_theta = getattr(hf_cfg, "rope_theta", None) or rope_params.get("rope_theta", 10000.0)
     config = ModelConfig(
         vocab_size=int(hf_cfg.vocab_size),
         n_layers=int(hf_cfg.num_hidden_layers),
@@ -163,7 +166,7 @@ def load_hf_llama_weights(
         n_kv_heads=int(getattr(hf_cfg, "num_key_value_heads", hf_cfg.num_attention_heads)),
         d_ff=int(hf_cfg.intermediate_size),
         rms_norm_eps=float(getattr(hf_cfg, "rms_norm_eps", 1e-6)),
-        rope_theta=float(getattr(hf_cfg, "rope_theta", 10000.0)),
+        rope_theta=float(rope_theta),
         tie_word_embeddings=tie_emb,
     )
 
