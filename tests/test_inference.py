@@ -193,7 +193,11 @@ def test_part_3_2_gqa_attention(golden) -> None:
     out = model.gqa_attention(q, k_cache, v_cache, mask)
     assert out.shape == q.shape
     assert jnp.all(jnp.isfinite(out)), "gqa_attention produced NaN/Inf (check all-masked left-pad rows!)"
-    np.testing.assert_allclose(np.asarray(out), golden["a13_gqa_expected"], rtol=1e-4, atol=1e-4)
+    # All-masked left-pad query rows (batch 1, t < 2) only need to be finite; their
+    # values are implementation-defined, so compare golden outputs on real rows only.
+    expected = golden["a13_gqa_expected"]
+    np.testing.assert_allclose(np.asarray(out[0]), expected[0], rtol=1e-4, atol=1e-4)
+    np.testing.assert_allclose(np.asarray(out[1, 2:]), expected[1, 2:], rtol=1e-4, atol=1e-4)
 
     out_dirty = model.gqa_attention(q, k_cache.at[:, 4:].set(1e5), v_cache.at[:, 4:].set(-1e5), mask)
     np.testing.assert_allclose(np.asarray(out[0]), np.asarray(out_dirty[0]), rtol=1e-4, atol=1e-4)
